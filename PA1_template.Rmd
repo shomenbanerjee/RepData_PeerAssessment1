@@ -12,20 +12,32 @@ The first step is to download the .zip file locally into the working directory a
 
 - read.csv into a dataframe
 
-```{r download data, echo=FALSE}
+```{r download data, echo=FALSE, warning=FALSE, message=FALSE}
 
-       #install.packages("downloader", "dplyr", "plyr", repos = 'http://cran.us.r-project.org')
-       #library(downloader)
-       #library(plyr)
-       #library(dplyr)
+       install.packages("downloader", 
+                        repos = "http://cran.us.r-project.org",
+                        silent = TRUE)
+       install.packages("dplyr", 
+                        repos = "http://cran.us.r-project.org",
+                        silent = TRUE)
+       install.packages("plyr", 
+                        repos = "http://cran.us.r-project.org",
+                        silent = TRUE)
+       install.packages("lubridate", 
+                        repos = "http://cran.us.r-project.org",
+                        silent = TRUE)
        
-       #Load file location       
+       library(downloader, quietly=TRUE)
+       require(dplyr, quietly=TRUE)
+       library(plyr, quietly=TRUE)
+       library(lubridate, quietly=TRUE)
+
+       #Load file location              
+       url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
        
-       #url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+       download(url, dest="repdata-data-activity.zip", mode="wb")
        
-       #download(url, dest="repdata-data-activity.zip", mode="wb")
-       
-       #unzip("repdata-data-activity.zip", exdir = "./repdata-data-activity")
+       unzip("repdata-data-activity.zip", exdir = "./repdata-data-activity")
        
        
        #Load file location       
