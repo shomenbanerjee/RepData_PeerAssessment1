@@ -1,25 +1,219 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# PA1_Template (Reproducible Research, Week 2)
+
+### Author: "SB"
+### date: "Tuesday, May 12, 2015"
+
+The first step is to download the .zip file locally into the working directory and load it into a data frame.
+
+- Install 'downloader' package
+
+- download .zip file locally, and unzip it
+
+- read.csv into a dataframe
+
+```{r download data, echo=FALSE}
+
+       #install.packages("downloader", "dplyr", "plyr", repos = 'http://cran.us.r-project.org')
+       #library(downloader)
+       #library(plyr)
+       #library(dplyr)
+       
+       #Load file location       
+       
+       #url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+       
+       #download(url, dest="repdata-data-activity.zip", mode="wb")
+       
+       #unzip("repdata-data-activity.zip", exdir = "./repdata-data-activity")
+       
+       
+       #Load file location       
+       file <- "./repdata-data-activity/activity.csv"
+       
+       
+       #Read file into a data frame       
+       activityFile <- read.csv(file, header=TRUE)
+       activity <- activityFile       
+
+       #Remove 'NA' from steps
+       activity <- subset(activity, !is.na(activity$steps))
+       
+       #Convert date into a date data type
+       activity$date <- as.Date(as.character(activity$date))
 
 
-## Loading and preprocessing the data
+
+```
+
+____________________________________________________________________________________________________
+
+### Let us now sum the steps by each day and create a histogram
+
+```{r process Data part1, echo=FALSE}
+       
+       
+       sumActivity <- aggregate(activity$steps, by=list(activity$date), FUN=sum)
+       names(sumActivity) <- c("date", "steps")     
+
+       
+       hist(x=sumActivity$steps, 
+            col="gray", 
+            main = "Steps taken Daily", 
+            xlab = "Steps taken daily")    
+     
+
+```
+
+### Calculate the Mean and Median steps taken per day
+
+```{r mean&median, echo=FALSE}
+
+       mean <- mean(sumActivity$steps, na.rm=TRUE)
+       median <- median(sumActivity$steps, na.rm=TRUE)
+
+```
+Mean: `r mean`
+
+Median: `r median`
+
+_____________________________________________________________________________________________________
+
+### Make a plot for Average Daily Pattern of steps taken each day
+
+```{r averageDaily Pattern, echo=FALSE}
 
 
+       stepsByInterval <- aggregate(activity$steps, by=list(activity$interval), FUN=mean)
+       names(stepsByInterval) <- c("interval", "steps")
+       
 
-## What is mean total number of steps taken per day?
+       plot(x = stepsByInterval$interval,
+            y = stepsByInterval$steps,
+            type = "l",
+            main = "Daily Avg steps by Interval",
+            xlab = "Interval",
+            ylab = "Daily Avg steps")
+
+       maxInterval <- with(stepsByInterval,interval[which.max(steps)])
+
+```
 
 
+Highest steps are in `r maxInterval` Interval
 
-## What is the average daily activity pattern?
+_____________________________________________________________________________________________________
+
+### Take a stock of missing values in the data set
+
+```{r missingValues, echo=FALSE}
 
 
+       missingCount <- sum(is.na(activityFile$steps))
+   
 
-## Imputing missing values
+```
+
+There are a total of `r missingCount` elements that have missing values in the data set
 
 
+Lets consider filling up the missing values with the mean for that interval
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r fillMissingValues, echo=FALSE}
+
+       activityUpdated <- activityFile
+     
+
+       for (n in 1:nrow(activityUpdated)){
+              
+              if (is.na(activityUpdated$steps[n])) {
+                     
+                row_num <- which(stepsByInterval$interval == activityUpdated$interval[n])     
+                activityUpdated$steps[n] <- stepsByInterval$steps[row_num]
+                                             
+              }
+              
+       }
+      
+      
+
+       sumActivity <- aggregate(activityUpdated$steps, by=list(activityUpdated$date), FUN=sum)
+       names(sumActivity) <- c("date", "steps")     
+
+       
+       hist(x=sumActivity$steps, 
+            col="gray", 
+            main = "Steps taken Daily", 
+            xlab = "Steps taken daily")    
+     
+       mean1 <- mean(sumActivity$steps, na.rm=TRUE)
+       median1 <- median(sumActivity$steps, na.rm=TRUE)
+
+       diffMean <- mean1-mean
+       diffMedian <- median1-median
+
+```
+
+Mean Old: `r mean` 
+
+Mean New: `r mean1`
+
+Shift in Mean: `r diffMean`
+
+Median Old: `r median`
+
+Median New: `r median1`
+
+Shift in Median: `r diffMedian`
+___________________________________________________________________________________________________
+
+
+```{r weekdays, echo=FALSE}
+       
+
+       activityUpdated$weekday <- weekdays(as.Date(activityUpdated$date))
+       
+       
+       for (i in 1:nrow(activityUpdated)) {
+              
+              if (activityUpdated$weekday[i] == "Saturday" | activityUpdated$weekday[i] == "Sunday") {
+                     activityUpdated$weekday[i] <- "weekend"                     
+              }
+              else{
+                    activityUpdated$weekday[i] <- "weekday"    
+              }
+                     
+       }
+       
+       activityUpdated$weekday <- factor(activityUpdated$weekday)
+       
+       activityWeekday <- subset(activityUpdated, activityUpdated$weekday=="weekday")
+       activityWeekday <- aggregate(activityWeekday$steps, by=list(activityWeekday$interval), FUN=mean)
+       names(activityWeekday) <- c("interval", "steps")
+
+       
+       activityWeekend <- subset(activityUpdated, activityUpdated$weekday=="weekend")
+       activityWeekend <- aggregate(activityWeekend$steps, by=list(activityWeekend$interval), FUN=mean)
+       names(activityWeekend) <- c("interval", "steps")
+       
+
+       par(mfrow = c(2, 1))
+       
+       plot(x = activityWeekday$interval, 
+            y = activityWeekday$steps,
+            type="l", 
+            xlab="5 minute interval", 
+            ylab="Weekday steps", 
+            main="Weekdays")
+
+      
+       plot(x = activityWeekend$interval, 
+            y = activityWeekend$steps,
+            type="l", 
+            xlab="5 minute interval", 
+            ylab="Weekend steps", 
+            main="Weekends")
+
+```
+
+As per data seems like there is more physical activity during the weekends, as compared to weekdays.
